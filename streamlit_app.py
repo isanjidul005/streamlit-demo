@@ -380,5 +380,8 @@ elif st.session_state.current_view == "documentation":
     - **📈 Individual Insights**: Choose one student to track their performance trends across tests.
     - **🔍 Advanced Analysis**: Correlation study between attendance and performance with visual interpretation.
     
-    ### 📌 Notes
-   
+ ### 📌 Notes
+    - Ensure your dataset has properly labeled columns (like `Name`, `Class`, `Attendance`, `Score`).
+    - Missing values may affect the accuracy of statistics.
+    - Use the sidebar navigation to switch between views.
+    """)   # 👈 This was missing
