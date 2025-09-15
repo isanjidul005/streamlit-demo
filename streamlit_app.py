@@ -1,3 +1,84 @@
+# =============================
+# Session State Initialization
+# =============================
+if "df" not in st.session_state:
+    st.session_state.df = None
+if "file_uploaded" not in st.session_state:
+    st.session_state.file_uploaded = False
+if "detected_cols" not in st.session_state:
+    st.session_state.detected_cols = {}
+if "current_view" not in st.session_state:
+    st.session_state.current_view = "overview"  # Default view
+
+# =============================
+# Sidebar Navigation
+# =============================
+with st.sidebar:
+    st.markdown("## 🧭 Navigation")
+
+    view_options = {
+        "📤 Data Upload": "data_upload",
+        "📊 Overview Dashboard": "overview",
+        "👥 Student Comparison": "comparison",
+        "🏫 Class Analytics": "class_analytics",
+        "📈 Individual Insights": "individual",
+        "🔍 Advanced Analysis": "advanced",
+        "📖 Documentation": "documentation"
+    }
+
+    selected_view = st.radio(
+        "Select Section",
+        list(view_options.keys()),
+        index=list(view_options.values()).index(st.session_state.current_view)
+    )
+
+    st.session_state.current_view = view_options[selected_view]
+
+# =============================
+# Main Content Switcher
+# =============================
+if st.session_state.current_view == "data_upload":
+    st.header("📤 Data Upload")
+    # (your upload logic goes here...)
+
+elif st.session_state.current_view == "overview":
+    st.header("📊 Overview Dashboard")
+    if not st.session_state.file_uploaded:
+        st.info("Upload data first to see overview.")
+    else:
+        # (overview logic goes here...)
+        pass
+
+elif st.session_state.current_view == "comparison":
+    st.header("👥 Student Comparison")
+    # (comparison logic...)
+
+elif st.session_state.current_view == "class_analytics":
+    st.header("🏫 Class Analytics")
+    # (class analysis logic...)
+
+elif st.session_state.current_view == "individual":
+    st.header("📈 Individual Insights")
+    # (individual insights logic...)
+
+elif st.session_state.current_view == "advanced":
+    st.header("🔍 Advanced Analysis")
+    # (advanced analysis logic...)
+
+elif st.session_state.current_view == "documentation":
+    st.header("📖 Documentation")
+    st.markdown("""
+    Welcome to **Right iTech Educational Analytics Platform**! 🎓  
+
+    Use the sidebar to navigate between sections:
+    - **Data Upload** → Load your dataset.
+    - **Overview Dashboard** → Quick stats & trends.
+    - **Student Comparison** → Compare two students.
+    - **Class Analytics** → Deep dive into a class.
+    - **Individual Insights** → Track one student.
+    - **Advanced Analysis** → Correlations & patterns.
+    """)
+
 # Advanced column detection with machine learning-like pattern matching
 def advanced_column_detection(df):
     detected = {
