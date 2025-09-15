@@ -140,7 +140,7 @@ with st.sidebar:
     # Data sampling
     st.header("📋 Data Options")
     sample_size = st.slider("Sample Size", 10, 100, 50)
-    show_raw_data = st.checkbox("Show Raw Data"))
+    show_raw_data = st.checkbox("Show Raw Data")
 
 # If no file uploaded yet, show instructions
 if not st.session_state.file_uploaded:
