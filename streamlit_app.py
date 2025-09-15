@@ -9,12 +9,14 @@ from io import StringIO
 import warnings
 warnings.filterwarnings('ignore')
 
+
 # Set page configuration
 st.set_page_config(
     page_title="Student Analytics Dashboard Pro",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    theme="light"  # Users can change this in Streamlit's settings menu (top right → Settings)
 )
 
 # Custom CSS for styling
@@ -133,39 +135,12 @@ with st.sidebar:
     theme = st.radio(
         "Choose theme", 
         ["Default", "Dark", "Light", "Colorful"], 
-        index=["Default", "Dark", "Light", "Colorful"].index(st.session_state.current_theme)
-    )
-
-    if theme != st.session_state.current_theme:
-        st.session_state.current_theme = theme
-        st.rerun()
-
-    # Apply theme based on session state
-    if st.session_state.current_theme == "Dark":
-        st.markdown("""
-        <style>
-        .main { background-color: #0E1117; color: white; }
-        .stButton>button { background: linear-gradient(45deg, #FF6B6B, #EE5A24); }
-        .metric-card { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); }
-        </style>
-        """, unsafe_allow_html=True)
-    elif st.session_state.current_theme == "Light":
-        st.markdown("""
-        <style>
-        .main { background-color: #FFFFFF; color: black; }
-        .stButton>button { background: linear-gradient(45deg, #4ECDC4, #556270); }
-        .metric-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: black; }
-        </style>
-        """, unsafe_allow_html=True)
-    elif st.session_state.current_theme == "Colorful":
-        st.markdown("""
-        <style>
-        .main { background-color: #F8F9FA; }
-        .stButton>button { background: linear-gradient(45deg, #FF9A8B, #FF6A88, #FF99AC); }
-        .metric-card { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%); color: black; }
-        </style>
-        """, unsafe_allow_html=True)
-
+   
+    # Display options (remove the theme selector)
+    st.header("📊 Display Options")
+    show_animations = st.checkbox("Show animations", value=True)
+    data_points = st.slider("Max data points to show", 10, 200, 50)
+        
     # Data sampling
     st.header("📋 Data Options")
     sample_size = st.slider("Sample Size", 10, 100, 50)
