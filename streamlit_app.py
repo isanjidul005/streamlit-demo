@@ -1,21 +1,87 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+import warnings
+
+warnings.filterwarnings('ignore')
+
 # =============================
-# Session State Initialization
+# App Configuration
 # =============================
-if "df" not in st.session_state:
-    st.session_state.df = None
-if "file_uploaded" not in st.session_state:
-    st.session_state.file_uploaded = False
-if "detected_cols" not in st.session_state:
-    st.session_state.detected_cols = {}
-if "current_view" not in st.session_state:
-    st.session_state.current_view = "overview"  # Default view
+st.set_page_config(
+    page_title="Right iTech",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# =============================
+# Custom CSS
+# =============================
+st.markdown("""
+<style>
+.main-header {
+    font-size: 3.5rem;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+.sub-header {
+    font-size: 2rem;
+    color: #2c3e50;
+    border-bottom: 4px solid #3498db;
+    padding-bottom: 0.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+.stButton>button {
+    background: linear-gradient(45deg, #FF4B2B, #FF416C);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    font-weight: bold;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =============================
+# Safe Session State Initialization
+# =============================
+def init_session_state():
+    defaults = {
+        "df": None,
+        "cleaned_df": None,
+        "file_uploaded": False,
+        "detected_cols": {},
+        "column_mapping": {},
+        "current_view": "overview",
+        "selected_students": [],
+        "current_class": None
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+init_session_state()
+
+# =============================
+# App Title
+# =============================
+st.markdown('<h1 class="main-header">📊 Right iTech</h1>', unsafe_allow_html=True)
+st.markdown("### AI-Powered Student Performance Analytics Platform")
 
 # =============================
 # Sidebar Navigation
 # =============================
 with st.sidebar:
     st.markdown("## 🧭 Navigation")
-
     view_options = {
         "📤 Data Upload": "data_upload",
         "📊 Overview Dashboard": "overview",
@@ -25,119 +91,135 @@ with st.sidebar:
         "🔍 Advanced Analysis": "advanced",
         "📖 Documentation": "documentation"
     }
-
     selected_view = st.radio(
         "Select Section",
         list(view_options.keys()),
         index=list(view_options.values()).index(st.session_state.current_view)
     )
-
     st.session_state.current_view = view_options[selected_view]
 
 # =============================
-# Main Content Switcher
+# Main Section Switcher
 # =============================
-if st.session_state.current_view == "data_upload":
-    st.header("📤 Data Upload")
-    # (your upload logic goes here...)
+def show_data_upload():
+    st.markdown('<h2 class="sub-header">📤 Data Upload</h2>', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader(
+        "Upload CSV or Excel",
+        type=["csv", "xlsx", "xls"]
+    )
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file, engine="openpyxl")
+            st.session_state.df = df
+            st.session_state.file_uploaded = True
 
-elif st.session_state.current_view == "overview":
-    st.header("📊 Overview Dashboard")
-    if not st.session_state.file_uploaded:
-        st.info("Upload data first to see overview.")
+            # Simple column detection
+            detected = {
+                "id_col": None,
+                "name_col": None,
+                "class_col": None,
+                "attendance_col": None,
+                "score_cols": []
+            }
+            for col in df.columns:
+                cl = col.lower()
+                if any(x in cl for x in ["id", "roll", "number"]):
+                    detected["id_col"] = col
+                elif any(x in cl for x in ["name", "student"]):
+                    detected["name_col"] = col
+                elif any(x in cl for x in ["class", "section", "grade"]):
+                    detected["class_col"] = col
+                elif any(x in cl for x in ["attendance", "%"]):
+                    detected["attendance_col"] = col
+                elif any(x in cl for x in ["score", "mark", "exam", "test"]):
+                    detected["score_cols"].append(col)
+            st.session_state.detected_cols = detected
+            st.session_state.column_mapping = detected
+
+            st.success(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns")
+            st.dataframe(df.head(10))
+        except Exception as e:
+            st.error(f"Failed to load file: {e}")
     else:
-        # (overview logic goes here...)
-        pass
+        st.info("Please upload a file to proceed.")
 
-elif st.session_state.current_view == "comparison":
-    st.header("👥 Student Comparison")
-    # (comparison logic...)
 
-elif st.session_state.current_view == "class_analytics":
-    st.header("🏫 Class Analytics")
-    # (class analysis logic...)
+def show_overview():
+    st.markdown('<h2 class="sub-header">📊 Overview Dashboard</h2>', unsafe_allow_html=True)
+    if not st.session_state.file_uploaded:
+        st.info("Upload data first.")
+        return
 
-elif st.session_state.current_view == "individual":
-    st.header("📈 Individual Insights")
-    # (individual insights logic...)
+    df = st.session_state.df
+    col_map = st.session_state.column_mapping
 
-elif st.session_state.current_view == "advanced":
-    st.header("🔍 Advanced Analysis")
-    # (advanced analysis logic...)
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Students", len(df))
+    with col2:
+        if col_map["attendance_col"]:
+            st.metric("Average Attendance", f"{df[col_map['attendance_col']].mean():.1f}%")
+    with col3:
+        if col_map["score_cols"]:
+            st.metric("Average Score", f"{df[col_map['score_cols']].mean().mean():.1f}")
+    with col4:
+        if col_map["class_col"]:
+            st.metric("Total Classes", df[col_map["class_col"]].nunique())
 
-elif st.session_state.current_view == "documentation":
-    st.header("📖 Documentation")
+    # Example plot
+    if col_map["score_cols"]:
+        fig = px.bar(df[col_map["score_cols"]].mean(), title="Average Score by Test")
+        st.plotly_chart(fig, use_container_width=True)
+
+
+def show_comparison():
+    st.markdown('<h2 class="sub-header">👥 Student Comparison</h2>', unsafe_allow_html=True)
+    st.info("Comparison section placeholder (to be implemented).")
+
+
+def show_class_analytics():
+    st.markdown('<h2 class="sub-header">🏫 Class Analytics</h2>', unsafe_allow_html=True)
+    st.info("Class analytics section placeholder.")
+
+
+def show_individual():
+    st.markdown('<h2 class="sub-header">📈 Individual Insights</h2>', unsafe_allow_html=True)
+    st.info("Individual insights section placeholder.")
+
+
+def show_advanced():
+    st.markdown('<h2 class="sub-header">🔍 Advanced Analysis</h2>', unsafe_allow_html=True)
+    st.info("Advanced analytics placeholder.")
+
+
+def show_documentation():
+    st.markdown('<h2 class="sub-header">📖 Documentation</h2>', unsafe_allow_html=True)
     st.markdown("""
-    Welcome to **Right iTech Educational Analytics Platform**! 🎓  
-
-    Use the sidebar to navigate between sections:
-    - **Data Upload** → Load your dataset.
-    - **Overview Dashboard** → Quick stats & trends.
-    - **Student Comparison** → Compare two students.
-    - **Class Analytics** → Deep dive into a class.
-    - **Individual Insights** → Track one student.
-    - **Advanced Analysis** → Correlations & patterns.
+    **Right iTech Platform Documentation**
+    
+    - **Data Upload**: Upload CSV/XLSX files. Columns auto-detected.
+    - **Overview Dashboard**: High-level statistics & plots.
+    - **Student Comparison**: Compare students side by side.
+    - **Class Analytics**: Class-wise performance and attendance.
+    - **Individual Insights**: Track one student's progress.
+    - **Advanced Analysis**: Correlation and trends.
     """)
 
-# Advanced column detection with machine learning-like pattern matching
-def advanced_column_detection(df):
-    detected = {
-        'id_cols': [],
-        'name_cols': [],
-        'class_cols': [],
-        'attendance_cols': [],
-        'score_cols': [],
-        'date_cols': [],
-        'demographic_cols': []
-    }
-    
-    for col in df.columns:
-        col_lower = str(col).lower()
-        col_dtype = str(df[col].dtype)
-        
-        # Multi-factor column detection
-        score = 0
 
-        # ID columns detection
-        if any(x in col_lower for x in ['id', 'roll', 'number', 'code', 'studentid', 'reg']):
-            if col_dtype in ['int64', 'float64'] or (df[col].nunique() == len(df)):
-                detected['id_cols'].append(col)
+# =============================
+# Show the section based on current_view
+# =============================
+view_funcs = {
+    "data_upload": show_data_upload,
+    "overview": show_overview,
+    "comparison": show_comparison,
+    "class_analytics": show_class_analytics,
+    "individual": show_individual,
+    "advanced": show_advanced,
+    "documentation": show_documentation
+}
 
-        # Name columns detection  
-        elif any(x in col_lower for x in ['name', 'student', 'fullname', 'first', 'last']):
-            if col_dtype == 'object' and df[col].nunique() > 1:
-                detected['name_cols'].append(col)
-        
-        # Class columns detection
-        elif any(x in col_lower for x in ['class', 'section', 'grade', 'form', 'batch', 'group']):
-            detected['class_cols'].append(col)
-        
-        # Attendance columns detection
-        elif any(x in col_lower for x in ['attendance', 'present', 'absent', 'pct', '%', 'rate']):
-            if col_dtype in ['int64', 'float64']:
-                detected['attendance_cols'].append(col)
-        
-        # Score columns detection
-        elif any(x in col_lower for x in ['test', 'exam', 'score', 'mark', 'assessment', 'quiz', 'assignment']):
-            if col_dtype in ['int64', 'float64']:
-                detected['score_cols'].append(col)
-        
-        # Date columns detection
-        elif any(x in col_lower for x in ['date', 'time', 'day', 'month', 'year']):
-            detected['date_cols'].append(col)
-        
-        # Demographic columns
-        elif any(x in col_lower for x in ['age', 'gender', 'dob', 'background', 'category']):
-            detected['demographic_cols'].append(col)
-    
-    # Auto-select best candidates
-    final_mapping = {
-        'primary_id': detected['id_cols'][0] if detected['id_cols'] else None,
-        'primary_name': detected['name_cols'][0] if detected['name_cols'] else None,
-        'primary_class': detected['class_cols'][0] if detected['class_cols'] else None,
-        'primary_attendance': detected['attendance_cols'][0] if detected['attendance_cols'] else None,
-        'score_columns': detected['score_cols'],
-        'demographic_columns': detected['demographic_cols']
-    }
-    
-    return final_mapping
+view_funcs[st.session_state.current_view]()
