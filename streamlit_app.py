@@ -209,8 +209,8 @@ if st.session_state.current_view == "data_upload":
                     score = 0
 
                     if any(x in col_lower for x in ['id', 'roll', 'number', 'code', 'studentid', 'reg']):
-    if col_dtype in ['int64', 'float64'] or (df[col].nunique() == len(df)):
-        detected['id_cols'].append(col)
+                        if col_dtype in ['int64', 'float64'] or (df[col].nunique() == len(df)):
+                            detected['id_cols'].append(col)
     
 
                     
