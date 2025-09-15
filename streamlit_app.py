@@ -10,14 +10,16 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-# Set page configuration
-st.set_page_config(
-    page_title="Student Analytics Dashboard Pro",
-    page_icon="🎓",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    theme="light"  # Users can change this in Streamlit's settings menu (top right → Settings)
-)
+# Initialize session state for data persistence
+if 'df' not in st.session_state:
+    st.session_state.df = None
+if 'file_uploaded' not in st.session_state:
+    st.session_state.file_uploaded = False
+if 'selected_students' not in st.session_state:
+    st.session_state.selected_students = []
+if 'current_view' not in st.session_state:
+    st.session_state.current_view = "overview"
+# REMOVE any theme-related session state lines
 
 # Custom CSS for styling
 st.markdown("""
@@ -130,13 +132,7 @@ with st.sidebar:
     selected_view = st.radio("Select View", list(view_options.keys()))
     st.session_state.current_view = view_options[selected_view]
 
-    # Theme selector with functionality
-    st.header("🎨 Theme")
-    theme = st.radio(
-        "Choose theme", 
-        ["Default", "Dark", "Light", "Colorful"], 
-   
-    # Display options (remove the theme selector)
+       # Display options (remove the broken theme selector)
     st.header("📊 Display Options")
     show_animations = st.checkbox("Show animations", value=True)
     data_points = st.slider("Max data points to show", 10, 200, 50)
@@ -144,7 +140,7 @@ with st.sidebar:
     # Data sampling
     st.header("📋 Data Options")
     sample_size = st.slider("Sample Size", 10, 100, 50)
-    show_raw_data = st.checkbox("Show Raw Data")
+    show_raw_data = st.checkbox("Show Raw Data"))
 
 # If no file uploaded yet, show instructions
 if not st.session_state.file_uploaded:
