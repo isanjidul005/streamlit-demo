@@ -449,7 +449,7 @@ else:
             # Progress chart
             scores = student_data[wmt_columns].values
             weeks = [f"Week {i+1}" for i in range(len(scores))]
-            valid_scores = score[~np.isnan(scores)]
+            valid_scores = scores[~np.isnan(scores)]
             valid_weeks = [weeks[i] for i in range(len(scores)) if not np.isnan(scores[i])]
             
             if len(valid_scores) > 0:
